@@ -51,13 +51,11 @@ def download_google_images():
         shutil.rmtree(downloads)
     os.mkdir(downloads)
 
-    num_images_requested = 600
+    num_images_requested = 10
+    search_term_list = ["crimini mushroom","oyster mushroom","amanita mushroom"]
+
     # Each scrolls provides 400 image approximately
     number_of_scrolls = int(num_images_requested / 400) + 1
-
-    #search_term_list = ["tomato", "bell pepper", "carrot", "beetroot", "broccoli"]
-    #search_term_list = ["people with sunglasses","people with hats"]
-    search_term_list = ["crimini mushroom","oyster mushroom","amanita mushroom"]
 
     # Firefox Options
     options = webdriver.FirefoxOptions()
@@ -79,8 +77,11 @@ def download_google_images():
 
         # Go to images
         images_link = images_links[0]
+        print("Going to link:",images_link)
         images_link.click()
 
+        # Scroll to get more images
+        print("number_of_scrolls:",number_of_scrolls)
         for _ in range(number_of_scrolls):
             for __ in range(10):
                 # multiple scrolls needed to show all 400 images
@@ -101,6 +102,7 @@ def download_google_images():
         imgs_urls = set()
         # Find the thumbnail images
         thumbnails = browser.find_elements_by_xpath('//a[@class="wXeWr islib nfEiy mM5pbd"]')
+        print("Number of thumbnails:",len(thumbnails))
         # loop over the thumbs to retrive the links
         for thumbnail in thumbnails:
             # check if reached the request number of links
@@ -133,39 +135,21 @@ def download_google_images():
         if not os.path.exists(img_dir):
             os.makedirs(img_dir)
 
-        # count = 0
-        # for url in imgs_urls:
-        #     try:
-        #
-        #         with requests.get(url, stream=True) as r:
-        #             r.raise_for_status()
-        #             file_path = os.path.join(img_dir, '{0}.jpg'.format(count))
-        #             with open(file_path, 'wb') as f:
-        #                 for chunk in r.iter_content(chunk_size=8192):
-        #                     f.write(chunk)
-        #             count += 1
-        #
-        #         # sleep
-        #         if count % 10 == 0:
-        #             time.sleep(3)
-        #     except Exception as e:
-        #         print("Error in url:", url)
-        #         print(e)
-        #         continue
 
         count = 0
-        for url in imgs_urls:
-            file_path = os.path.join(img_dir, '{0}.jpg'.format(count))
-            count += 1
-            queue.put({"url": url, "img_dir": img_dir,"file_path":file_path})
+        if len(imgs_urls) > 0:
+            for url in imgs_urls:
+                file_path = os.path.join(img_dir, '{0}.jpg'.format(count))
+                count += 1
+                queue.put({"url": url, "img_dir": img_dir,"file_path":file_path})
 
-        # Execute downloads from queue in a thread
-        for i in range(thread_count):
-            thread = Downloader(queue, i)
-            thread.start()
-            threads.append(thread)
-        for thread in threads:
-            thread.join()
+            # Execute downloads from queue in a thread
+            for i in range(thread_count):
+                thread = Downloader(queue, i)
+                thread.start()
+                threads.append(thread)
+            for thread in threads:
+                thread.join()
 
     # Quit the browser
     browser.quit()
