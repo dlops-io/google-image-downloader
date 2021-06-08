@@ -52,7 +52,7 @@ def download_google_images():
     os.mkdir(downloads)
 
     num_images_requested = 10
-    search_term_list = ["crimini mushroom","oyster mushroom","amanita mushroom"]
+    search_term_list = ["jordan 1","jordan 2","jordan 3"]
 
     # Each scrolls provides 400 image approximately
     number_of_scrolls = int(num_images_requested / 400) + 1
@@ -70,14 +70,23 @@ def download_google_images():
         images_links = browser.find_elements_by_xpath('//a[contains(@class, "hide-focus-ring")]')
         for link in images_links:
             #print(link)
-            print(link.get_attribute("href"))
+            link_href = link.get_attribute("href")
+            print(link_href)
+
+            # Find images link
+            if "&tbm=isch" in link_href:
+                images_link = link
+                break
+
+        if images_link is None:
+            raise ValueError('Google Images link was not found')
 
         # Wait
         time.sleep(5)
 
         # Go to images
-        images_link = images_links[0]
-        print("Going to link:",images_link)
+        #images_link = images_links[0]
+        print("Going to link:",images_link.get_attribute("href"))
         images_link.click()
 
         # Scroll to get more images
